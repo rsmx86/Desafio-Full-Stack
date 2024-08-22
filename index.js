@@ -136,7 +136,7 @@ function validarCPF(cpf) {
       cpf === "99999999999") {
         return false;
     }
-  
+
     let soma = 0;
     let resto;
     for (let i = 1; i <= 9; i++) {
@@ -158,4 +158,33 @@ function validarCPF(cpf) {
   
     return true;
   }
+// Função para validar E-mail
+function validarEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  }
+  app.post('/users', (req, res) => {
+    const { full_name, cpf, email, phone, role } = req.body;
   
+    // Validação de CPF
+    if (!validarCPF(cpf)) {
+      return res.status(400).json({ error: 'CPF inválido' });
+    }
+  
+    // Validação de E-mail
+    if (!validarEmail(email)) {
+      return res.status(400).json({ error: 'E-mail inválido' });
+    }
+  
+    const query = `INSERT INTO users (full_name, cpf, email, phone, role) VALUES (?, ?, ?, ?, ?)`;
+  
+    connection.query(query, [full_name, cpf, email, phone, role], (err, results) => {
+      if (err) {
+        if (err.code === 'ER_DUP_ENTRY') {
+          return res.status(400).json({ error: 'Usuário ou E-mail já cadastrado' });
+        }
+        return res.status(500).json({ error: 'Erro ao criar usuário' });
+      }
+      res.status(201).json({ message: 'Usuário criado com sucesso', userId: results.insertId });
+    });
+  });
